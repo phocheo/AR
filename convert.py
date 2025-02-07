@@ -21,4 +21,4 @@ def generate_patt(image_path, output_patt_path):
 
 
 # Example usage
-generate_patt("4.png", "4.patt")
+generate_patt("2212.png", "2212.patt")
