@@ -8,7 +8,7 @@
     <title>2212 Phố Chèo - AR</title>
     <!-- include three.js library -->
     <script src="js/three.js"></script>
-    <!-- include jsartookit -->
+    <!-- include jsartoolkit -->
     <script src="jsartoolkit5/artoolkit.min.js"></script>
     <script src="jsartoolkit5/artoolkit.api.js"></script>
     <!-- include threex.artoolkit -->
@@ -35,26 +35,20 @@
         type='video/mp4; codecs="avc1.64001F, mp4a.40.2"'
       />
     </video>
-    <!-- 
-  Example created by Lee Stemkoski: https://github.com/stemkoski
-  Based on the AR.js library and examples created by Jerome Etienne: https://github.com/jeromeetienne/AR.js/
--->
 
     <script>
       var scene, camera, renderer, clock, deltaTime, totalTime;
-
       var arToolkitSource, arToolkitContext;
-
       var markerRoot1;
-
       var mesh1;
+      var video = document.getElementById("video");
+      var markerVisible = false;
 
       initialize();
       animate();
 
       function initialize() {
         scene = new THREE.Scene();
-
         let ambientLight = new THREE.AmbientLight(0xcccccc, 0.5);
         scene.add(ambientLight);
 
@@ -76,13 +70,8 @@
         deltaTime = 0;
         totalTime = 0;
 
-        ////////////////////////////////////////////////////////////
-        // setup arToolkitSource
-        ////////////////////////////////////////////////////////////
-
-        arToolkitSource = new THREEx.ArToolkitSource({
-          sourceType: "webcam",
-        });
+        // Setup arToolkitSource
+        arToolkitSource = new THREEx.ArToolkitSource({ sourceType: "webcam" });
 
         function onResize() {
           arToolkitSource.onResize();
@@ -96,63 +85,62 @@
           onResize();
         });
 
-        // handle resize event
         window.addEventListener("resize", function () {
           onResize();
         });
 
-        ////////////////////////////////////////////////////////////
-        // setup arToolkitContext
-        ////////////////////////////////////////////////////////////
-
-        // create atToolkitContext
+        // Setup arToolkitContext
         arToolkitContext = new THREEx.ArToolkitContext({
           cameraParametersUrl: "data/camera_para.dat",
           detectionMode: "mono",
         });
 
-        // copy projection matrix to camera when initialization complete
         arToolkitContext.init(function onCompleted() {
           camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
         });
 
-        ////////////////////////////////////////////////////////////
-        // setup markerRoots
-        ////////////////////////////////////////////////////////////
-
-        // build markerControls
+        // Setup marker
         markerRoot1 = new THREE.Group();
         scene.add(markerRoot1);
+
         let markerControls1 = new THREEx.ArMarkerControls(
           arToolkitContext,
           markerRoot1,
           {
             type: "pattern",
             patternUrl: "data/hiro.patt",
+            changeMatrixMode: "modelViewMatrix",
           },
         );
 
         let geometry1 = new THREE.PlaneBufferGeometry(6, 9, 1, 1);
-
-        let video = document.getElementById("video");
         let texture = new THREE.VideoTexture(video);
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
         texture.format = THREE.RGBFormat;
-        let material1 = new THREE.MeshBasicMaterial({
-          map: texture,
-        });
+        let material1 = new THREE.MeshBasicMaterial({ map: texture });
 
         mesh1 = new THREE.Mesh(geometry1, material1);
         mesh1.rotation.x = -Math.PI / 2;
-
         markerRoot1.add(mesh1);
       }
 
       function update() {
-        // update artoolkit on every frame
         if (arToolkitSource.ready !== false)
           arToolkitContext.update(arToolkitSource.domElement);
+
+        // Check if marker is visible
+        if (markerRoot1.visible) {
+          if (!markerVisible) {
+            markerVisible = true;
+            video.play();
+          }
+        } else {
+          if (markerVisible) {
+            markerVisible = false;
+            video.pause();
+          }
+        }
       }
 
       function render() {
