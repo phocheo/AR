@@ -99,6 +99,10 @@
           if (arToolkitContext.arController !== null) {
             arToolkitSource.copySizeTo(arToolkitContext.arController.canvas);
           }
+          // Ensure fullscreen rendering
+          renderer.setSize(window.innerWidth, window.innerHeight);
+          renderer.domElement.style.width = "100vw";
+          renderer.domElement.style.height = "100vh";
         }
 
         arToolkitSource.init(function onReady() {

@@ -1,12 +1,15 @@
-body 
+html, body 
 {
 	background-color: #eeeeee;
 	background-image: url("../images/pixels.png");
 	background-repeat: repeat;      /* repeat, no-repeat */
 	background-attachment: fixed;   /* scroll, fixed */
 	background-position: top left;  /* for no-repeat setting: top/bottom, left/right */
-	margin: 2% 5% 0% 5%;            /* top, left, bottom, right or TRBL */
-	
+	margin: 0;            /* top, left, bottom, right or TRBL */
+	padding: 0;
+	overflow: hidden;
+	width: 100%;
+	height: 100%;
 	font-family: Georgia, Serif;	/* list font names in order of preference */
 	font-weight: normal;            /* normal, bold */
 	font-style: normal;             /* normal, italic */
@@ -16,7 +19,12 @@ body
 	text-decoration: none;          /* none, underline, overline, line-through */
 	text-align: left;               /* left, right, center, justify */
 }
-
+canvas {
+	display: block;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
 .fancy
 {
 	min-height: 150px;
