@@ -36,6 +36,23 @@
     </video>
 
     <video
+      id="anh_long"
+      autoplay
+      loop
+      crossorigin="anonymous"
+      webkit-playsinline
+      style="display: none"
+    >
+      <source
+        src="video/pho_cheo.ogv"
+        type='video/ogg; codecs="theora, vorbis"'
+      />
+      <source
+        src="video/pho_cheo.mp4"
+        type='video/mp4; codecs="avc1.64001F, mp4a.40.2"'
+      />
+    </video>
+    <video
       id="secret_video"
       autoplay
       loop
@@ -60,8 +77,10 @@
       var mesh1, mesh2;
       var thanks_for_coming = document.getElementById("thanks_for_coming");
       var secret_video = document.getElementById("secret_video");
+      var anh_long = document.getElementById("anh_long");
       var marker1Visible = false,
         marker2Visible = false;
+        marker3Visible = false;
 
       initialize();
       animate();
@@ -167,6 +186,32 @@
         if (arToolkitSource.ready !== false)
           arToolkitContext.update(arToolkitSource.domElement);
 
+        // Marker 3 Setup
+        markerRoot3 = new THREE.Group();
+        scene.add(markerRoot3);
+
+        let markerControls3 = new THREEx.ArMarkerControls(
+          arToolkitContext,
+          markerRoot3,
+          {
+            type: "pattern",
+            patternUrl: "data/pattern-3.patt",
+            changeMatrixMode: "modelViewMatrix",
+          },
+        );
+
+        let geometry3 = new THREE.PlaneBufferGeometry(16, 9, 1, 1);
+        let texture3 = new THREE.VideoTexture(anh_long);
+        let material3 = new THREE.MeshBasicMaterial({ map: texture3 });
+
+        mesh3 = new THREE.Mesh(geometry3, material3);
+        mesh3.rotation.x = -Math.PI / 2;
+        markerRoot3.add(mesh3);
+      }
+
+      function update() {
+        if (arToolkitSource.ready !== false)
+          arToolkitContext.update(arToolkitSource.domElement);
         // Check marker 1 visibility
         if (markerRoot1.visible) {
           if (!marker1Visible) {
@@ -194,6 +239,19 @@
         }
       }
 
+        // Check marker 2 visibility
+        if (markerRoot3.visible) {
+          if (!marker3Visible) {
+            marker3Visible = true;
+            anh_long.play();
+          }
+        } else {
+          if (marker3Visible) {
+            marker3Visible = false;
+            secret_video.pause();
+          }
+        }
+      }
       function render() {
         renderer.render(scene, camera);
       }
