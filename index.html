@@ -70,199 +70,171 @@
       />
     </video>
 
-    <script>
-      var scene, camera, renderer, clock, deltaTime, totalTime;
-      var arToolkitSource, arToolkitContext;
-      var markerRoot1, markerRoot2;
-      var mesh1, mesh2;
-      var thanks_for_coming = document.getElementById("thanks_for_coming");
-      var secret_video = document.getElementById("secret_video");
-      var anh_long = document.getElementById("anh_long");
-      var marker1Visible = false,
+<script>
+  var scene, camera, renderer, clock, deltaTime, totalTime;
+  var arToolkitSource, arToolkitContext;
+  var markerRoot1, markerRoot2, markerRoot3;
+  var mesh1, mesh2, mesh3;
+  var thanks_for_coming = document.getElementById("thanks_for_coming");
+  var secret_video = document.getElementById("secret_video");
+  var anh_long = document.getElementById("anh_long");
+  var marker1Visible = false, marker2Visible = false, marker3Visible = false;
+
+  initialize();
+  animate();
+
+  function initialize() {
+    scene = new THREE.Scene();
+    let ambientLight = new THREE.AmbientLight(0xcccccc, 0.5);
+    scene.add(ambientLight);
+
+    camera = new THREE.Camera();
+    scene.add(camera);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setClearColor(new THREE.Color("lightgrey"), 0);
+    renderer.setSize(640, 480);
+    renderer.domElement.style.position = "absolute";
+    renderer.domElement.style.top = "0px";
+    renderer.domElement.style.left = "0px";
+    document.body.appendChild(renderer.domElement);
+
+    clock = new THREE.Clock();
+    deltaTime = 0;
+    totalTime = 0;
+
+    arToolkitSource = new THREEx.ArToolkitSource({ sourceType: "webcam" });
+
+    function onResize() {
+      arToolkitSource.onResize();
+      arToolkitSource.copySizeTo(renderer.domElement);
+      if (arToolkitContext.arController !== null) {
+        arToolkitSource.copySizeTo(arToolkitContext.arController.canvas);
+      }
+    }
+
+    arToolkitSource.init(() => onResize());
+    window.addEventListener("resize", () => onResize());
+
+    arToolkitContext = new THREEx.ArToolkitContext({
+      cameraParametersUrl: "data/camera_para.dat",
+      detectionMode: "mono",
+    });
+
+    arToolkitContext.init(() => {
+      camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+    });
+
+    // **Marker 1 Setup**
+    markerRoot1 = new THREE.Group();
+    scene.add(markerRoot1);
+
+    new THREEx.ArMarkerControls(arToolkitContext, markerRoot1, {
+      type: "pattern",
+      patternUrl: "data/pattern-1.patt",
+      changeMatrixMode: "modelViewMatrix",
+    });
+
+    let geometry1 = new THREE.PlaneBufferGeometry(10, 10, 1, 1);
+    let texture1 = new THREE.VideoTexture(thanks_for_coming);
+    let material1 = new THREE.MeshBasicMaterial({ map: texture1 });
+
+    mesh1 = new THREE.Mesh(geometry1, material1);
+    mesh1.rotation.x = -Math.PI / 2;
+    markerRoot1.add(mesh1);
+
+    // **Marker 2 Setup**
+    markerRoot2 = new THREE.Group();
+    scene.add(markerRoot2);
+
+    new THREEx.ArMarkerControls(arToolkitContext, markerRoot2, {
+      type: "pattern",
+      patternUrl: "data/pattern-2.patt",
+      changeMatrixMode: "modelViewMatrix",
+    });
+
+    let geometry2 = new THREE.PlaneBufferGeometry(10, 10, 1, 1);
+    let texture2 = new THREE.VideoTexture(secret_video);
+    let material2 = new THREE.MeshBasicMaterial({ map: texture2 });
+
+    mesh2 = new THREE.Mesh(geometry2, material2);
+    mesh2.rotation.x = -Math.PI / 2;
+    markerRoot2.add(mesh2);
+
+    // **Marker 3 Setup (Moved from `update()`)**
+    markerRoot3 = new THREE.Group();
+    scene.add(markerRoot3);
+
+    new THREEx.ArMarkerControls(arToolkitContext, markerRoot3, {
+      type: "pattern",
+      patternUrl: "data/pattern-3.patt",
+      changeMatrixMode: "modelViewMatrix",
+    });
+
+    let geometry3 = new THREE.PlaneBufferGeometry(16, 9, 1, 1);
+    let texture3 = new THREE.VideoTexture(anh_long);
+    let material3 = new THREE.MeshBasicMaterial({ map: texture3 });
+
+    mesh3 = new THREE.Mesh(geometry3, material3);
+    mesh3.rotation.x = -Math.PI / 2;
+    markerRoot3.add(mesh3);
+  }
+
+  function update() {
+    if (arToolkitSource.ready !== false)
+      arToolkitContext.update(arToolkitSource.domElement);
+
+    // **Check marker 1 visibility**
+    if (markerRoot1.visible) {
+      if (!marker1Visible) {
+        marker1Visible = true;
+        thanks_for_coming.play();
+      }
+    } else {
+      if (marker1Visible) {
+        marker1Visible = false;
+        thanks_for_coming.pause();
+      }
+    }
+
+    // **Check marker 2 visibility**
+    if (markerRoot2.visible) {
+      if (!marker2Visible) {
+        marker2Visible = true;
+        secret_video.play();
+      }
+    } else {
+      if (marker2Visible) {
         marker2Visible = false;
+        secret_video.pause();
+      }
+    }
+
+    // **Check marker 3 visibility (Fixed Pause Issue)**
+    if (markerRoot3.visible) {
+      if (!marker3Visible) {
+        marker3Visible = true;
+        anh_long.play();
+      }
+    } else {
+      if (marker3Visible) {
         marker3Visible = false;
-
-      initialize();
-      animate();
-
-      function initialize() {
-        scene = new THREE.Scene();
-        let ambientLight = new THREE.AmbientLight(0xcccccc, 0.5);
-        scene.add(ambientLight);
-
-        camera = new THREE.Camera();
-        scene.add(camera);
-
-        renderer = new THREE.WebGLRenderer({
-          antialias: true,
-          alpha: true,
-        });
-        renderer.setClearColor(new THREE.Color("lightgrey"), 0);
-        renderer.setSize(640, 480);
-        renderer.domElement.style.position = "absolute";
-        renderer.domElement.style.top = "0px";
-        renderer.domElement.style.left = "0px";
-        document.body.appendChild(renderer.domElement);
-
-        clock = new THREE.Clock();
-        deltaTime = 0;
-        totalTime = 0;
-
-        // Setup arToolkitSource
-        arToolkitSource = new THREEx.ArToolkitSource({ sourceType: "webcam" });
-
-        function onResize() {
-          arToolkitSource.onResize();
-          arToolkitSource.copySizeTo(renderer.domElement);
-          if (arToolkitContext.arController !== null) {
-            arToolkitSource.copySizeTo(arToolkitContext.arController.canvas);
-          }
-        }
-
-        arToolkitSource.init(function onReady() {
-          onResize();
-        });
-
-        window.addEventListener("resize", function () {
-          onResize();
-        });
-
-        // Setup arToolkitContext
-        arToolkitContext = new THREEx.ArToolkitContext({
-          cameraParametersUrl: "data/camera_para.dat",
-          detectionMode: "mono",
-        });
-
-        arToolkitContext.init(function onCompleted() {
-          camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
-        });
-
-        // Marker 1 Setup
-        markerRoot1 = new THREE.Group();
-        scene.add(markerRoot1);
-
-        let markerControls1 = new THREEx.ArMarkerControls(
-          arToolkitContext,
-          markerRoot1,
-          {
-            type: "pattern",
-            patternUrl: "data/pattern-1.patt",
-            changeMatrixMode: "modelViewMatrix",
-          },
-        );
-
-        let geometry1 = new THREE.PlaneBufferGeometry(10, 10, 1, 1);
-        let texture1 = new THREE.VideoTexture(thanks_for_coming);
-        let material1 = new THREE.MeshBasicMaterial({ map: texture1 });
-
-        mesh1 = new THREE.Mesh(geometry1, material1);
-        mesh1.rotation.x = -Math.PI / 2;
-        markerRoot1.add(mesh1);
-
-        // Marker 2 Setup
-        markerRoot2 = new THREE.Group();
-        scene.add(markerRoot2);
-
-        let markerControls2 = new THREEx.ArMarkerControls(
-          arToolkitContext,
-          markerRoot2,
-          {
-            type: "pattern",
-            patternUrl: "data/pattern-2.patt",
-            changeMatrixMode: "modelViewMatrix",
-          },
-        );
-
-        let geometry2 = new THREE.PlaneBufferGeometry(10, 10, 1, 1);
-        let texture2 = new THREE.VideoTexture(secret_video);
-        let material2 = new THREE.MeshBasicMaterial({ map: texture2 });
-
-        mesh2 = new THREE.Mesh(geometry2, material2);
-        mesh2.rotation.x = -Math.PI / 2;
-        markerRoot2.add(mesh2);
+        anh_long.pause(); // **Fixed: Pause the correct video**
       }
+    }
+  }
 
-      function update() {
-        if (arToolkitSource.ready !== false)
-          arToolkitContext.update(arToolkitSource.domElement);
+  function render() {
+    renderer.render(scene, camera);
+  }
 
-        // Marker 3 Setup
-        markerRoot3 = new THREE.Group();
-        scene.add(markerRoot3);
-
-        let markerControls3 = new THREEx.ArMarkerControls(
-          arToolkitContext,
-          markerRoot3,
-          {
-            type: "pattern",
-            patternUrl: "data/pattern-3.patt",
-            changeMatrixMode: "modelViewMatrix",
-          },
-        );
-
-        let geometry3 = new THREE.PlaneBufferGeometry(16, 9, 1, 1);
-        let texture3 = new THREE.VideoTexture(anh_long);
-        let material3 = new THREE.MeshBasicMaterial({ map: texture3 });
-
-        mesh3 = new THREE.Mesh(geometry3, material3);
-        mesh3.rotation.x = -Math.PI / 2;
-        markerRoot3.add(mesh3);
-      }
-
-      function update() {
-        if (arToolkitSource.ready !== false)
-          arToolkitContext.update(arToolkitSource.domElement);
-        // Check marker 1 visibility
-        if (markerRoot1.visible) {
-          if (!marker1Visible) {
-            marker1Visible = true;
-            thanks_for_coming.play();
-          }
-        } else {
-          if (marker1Visible) {
-            marker1Visible = false;
-            thanks_for_coming.pause();
-          }
-        }
-
-        // Check marker 2 visibility
-        if (markerRoot2.visible) {
-          if (!marker2Visible) {
-            marker2Visible = true;
-            secret_video.play();
-          }
-        } else {
-          if (marker2Visible) {
-            marker2Visible = false;
-            secret_video.pause();
-          }
-        }
-      }
-
-        // Check marker 2 visibility
-        if (markerRoot3.visible) {
-          if (!marker3Visible) {
-            marker3Visible = true;
-            anh_long.play();
-          }
-        } else {
-          if (marker3Visible) {
-            marker3Visible = false;
-            secret_video.pause();
-          }
-        }
-      }
-      function render() {
-        renderer.render(scene, camera);
-      }
-
-      function animate() {
-        requestAnimationFrame(animate);
-        deltaTime = clock.getDelta();
-        totalTime += deltaTime;
-        update();
-        render();
-      }
-    </script>
+  function animate() {
+    requestAnimationFrame(animate);
+    deltaTime = clock.getDelta();
+    totalTime += deltaTime;
+    update();
+    render();
+  }
+</script>
   </body>
 </html>
