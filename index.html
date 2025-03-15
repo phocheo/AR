@@ -2,7 +2,7 @@
   <head>
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, user-scalable=no, maximum-scale=1"
+      content="width=device-width, initial-scale=1, user-scalable=no"
     />
     <title>2212 Phố Chèo - AR</title>
     <!-- include three.js library -->
@@ -15,6 +15,7 @@
     <script src="threex/threex-artoolkitcontext.js"></script>
     <script src="threex/threex-arbasecontrols.js"></script>
     <script src="threex/threex-armarkercontrols.js"></script>
+    <link rel="stylesheet" href ="css/index.css">
   </head>
   <body style="margin: 0px; overflow: hidden; font-family: Monospace">
     <video
@@ -82,53 +83,65 @@
   initialize();
   animate();
 
-  function initialize() {
-    scene = new THREE.Scene();
-    camera = new THREE.Camera();
-    scene.add(camera);
+function initialize() {
+  // Scene, Camera, Renderer
+  scene = new THREE.Scene();
+  camera = new THREE.Camera();
+  scene.add(camera);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-    clock = new THREE.Clock();
+  // Clock for animations
+  clock = new THREE.Clock();
 
-    arToolkitSource = new THREEx.ArToolkitSource({ sourceType: "webcam" });
-    arToolkitSource.init(() => resize());
-    window.addEventListener("resize", () => resize());
+  // AR Toolkit Source (Webcam)
+  arToolkitSource = new THREEx.ArToolkitSource({ sourceType: "webcam" });
+  arToolkitSource.init(() => resize());
+  window.addEventListener("resize", () => resize());
 
-    arToolkitContext = new THREEx.ArToolkitContext({
-      cameraParametersUrl: "data/camera_para.dat",
-      detectionMode: "mono",
-    });
-    arToolkitContext.init(() => {
-      camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
-    });
+  // AR Toolkit Context (Marker Detection)
+  arToolkitContext = new THREEx.ArToolkitContext({
+    cameraParametersUrl: "data/camera_para.dat",
+    detectionMode: "mono",
+  });
+  arToolkitContext.init(() => {
+    camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+  });
 
-    function createMarker(pattern, videoElement) {
-      let markerRoot = new THREE.Group();
-      scene.add(markerRoot);
-      new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
-        type: "pattern",
-        patternUrl: pattern,
-        changeMatrixMode: "modelViewMatrix",
-      });
+  // Create Markers
+  markerRoot1 = createMarker("data/pattern-1.patt", thanks_for_coming);
+  markerRoot2 = createMarker("data/pattern-2.patt", secret_video);
+  markerRoot3 = createMarker("data/pattern-3.patt", anh_long);
 
-      let geometry = new THREE.PlaneBufferGeometry(10, 10);
-      let texture = new THREE.VideoTexture(videoElement);
-      let material = new THREE.MeshBasicMaterial({ map: texture });
-      let mesh = new THREE.Mesh(geometry, material);
-      mesh.rotation.x = -Math.PI / 2;
-      markerRoot.add(mesh);
+  // Preload Videos
+  thanks_for_coming.load();
+  secret_video.load();
+  anh_long.load();
+}
 
-      return { markerRoot, videoElement };
-    }
+function createMarker(patternUrl, videoElement) {
+  let markerRoot = new THREE.Group();
+  scene.add(markerRoot);
 
-    markerRoot1 = createMarker("data/pattern-1.patt", thanks_for_coming);
-    markerRoot2 = createMarker("data/pattern-2.patt", secret_video);
-    markerRoot3 = createMarker("data/pattern-3.patt", anh_long);
-  }
+  // Marker Controls
+  new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+    type: "pattern",
+    patternUrl: patternUrl,
+    changeMatrixMode: "modelViewMatrix",
+  });
 
+  // Video Texture
+  let geometry = new THREE.PlaneBufferGeometry(10, 10);
+  let texture = new THREE.VideoTexture(videoElement);
+  let material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+  let mesh = new THREE.Mesh(geometry, material);
+  mesh.rotation.x = -Math.PI / 2;
+  markerRoot.add(mesh);
+
+  return { markerRoot, videoElement };
+}
   function update() {
     if (arToolkitSource.ready) arToolkitContext.update(arToolkitSource.domElement);
     [markerRoot1, markerRoot2, markerRoot3].forEach(({ markerRoot, videoElement }) => {
